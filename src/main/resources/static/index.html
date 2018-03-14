@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+    <script src="http://libs.baidu.com/jquery/2.0.0/jquery.min.js"></script>
+</head>
+
+<body>
+
+<form id="form">
+    <label>
+        <input type="text" id="username" value="1111111"/>
+        <input type="text" id="password" value="1111111"/>
+        <input type="hidden" id="rememberMe" value="true"/>
+        <input type="button" onclick="login()" value="Login">
+    </label>
+</form>
+<span ><button onclick="authenticate()">getCurrentAccount </button></span>
+</body>
+<script>
+    var localStorage = window.localStorage;
+    function login() {
+            $.ajax({
+                url:"/api/authenticate",
+                type:"POST",
+                dataType: "json",
+                data:JSON.stringify({
+                        username: $("#username").val(),
+                        password: $("#password").val(),
+                        rememberMe: true
+                }),
+                contentType:"application/json",  //缺失会出现URL编码，无法转成json对象
+                success:function(res){
+                    console.log(JSON.stringify(res));
+                    var token = res.id_token;
+                    var rememberMe = $("#rememberMe").val();
+                    if(rememberMe) {
+                        localStorage.setItem("token", token);
+                    }
+                }
+            });
+    }
+    /**
+     * getCurrentAccount
+     */
+    function authenticate() {
+        $.ajax({
+            url:"/api/authenticate",
+            type:"GET",
+            beforeSend: function(request) {
+                request.setRequestHeader("Authorization","Bearer "+getToken());
+            },
+            contentType:"text/plain", //缺失会出现URL编码，无法转成json对象
+            statusCode:{
+                401:function(xhr) {
+                    alert("First login 👌？");
+                }
+            },
+            success:function(data){
+                    alert("CurrentAccount:"+data);
+            }
+        });
+    }
+
+    function getToken() {
+        return  localStorage.getItem("token");
+    }
+
+</script>
+</html>
